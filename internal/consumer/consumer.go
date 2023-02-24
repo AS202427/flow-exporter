@@ -30,6 +30,14 @@ var (
 		},
 		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname", "ip_family"},
 	)
+
+	flowFlowBytesTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "flow_flow_bytes_total",
+			Help: "Bytes flowed.",
+		},
+		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname", "ip_family"},
+	)
 )
 
 type flow struct {
@@ -143,6 +151,17 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 		).Add(float64(f.Bytes))
 	} else if f.DestinationAS == asn {
 		flowReceiveBytesTotal.With(
+			prometheus.Labels{
+				"source_as":           strconv.Itoa(f.SourceAS),
+				"source_as_name":      asns[f.SourceAS],
+				"destination_as":      strconv.Itoa(f.DestinationAS),
+				"destination_as_name": asns[f.DestinationAS],
+				"hostname":            f.Hostname,
+				"ip_family":           ipFamily,
+			},
+		).Add(float64(f.Bytes))
+	} else {
+		flowFlowBytesTotal.With(
 			prometheus.Labels{
 				"source_as":           strconv.Itoa(f.SourceAS),
 				"source_as_name":      asns[f.SourceAS],
