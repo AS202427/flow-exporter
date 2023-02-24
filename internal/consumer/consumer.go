@@ -35,8 +35,8 @@ var (
 type flow struct {
 	SourceAS      int    `json:"as_src"`
 	DestinationAS int    `json:"as_dst"`
-	SourceIP      string `json:"ip_dst"`
-	DestinationIP string `json:"ip_src"`
+	SourceIP      string `json:"ip_src"`
+	DestinationIP string `json:"ip_dst"`
 	Bytes         int    `json:"bytes"`
 	Hostname      string `json:"label"`
 }
