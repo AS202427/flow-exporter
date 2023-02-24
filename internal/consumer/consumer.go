@@ -20,7 +20,7 @@ var (
 			Name: "flow_receive_bytes_total",
 			Help: "Bytes received.",
 		},
-		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname"},
+		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname", "ip_family"},
 	)
 
 	flowTransmitBytesTotal = promauto.NewCounterVec(
@@ -28,7 +28,7 @@ var (
 			Name: "flow_transmit_bytes_total",
 			Help: "Bytes transferred.",
 		},
-		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname"},
+		[]string{"source_as", "source_as_name", "destination_as", "destination_as_name", "hostname", "ip_family"},
 	)
 )
 
@@ -124,6 +124,12 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 	var f flow
 	json.Unmarshal([]byte(message.Value), &f)
 
+	var ipFamily = "6"
+
+	if strings.Contains(f.SourceIP, ".") {
+		ipFamily = "4"
+	}
+
 	if f.SourceAS == asn {
 		flowTransmitBytesTotal.With(
 			prometheus.Labels{
@@ -132,6 +138,7 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 				"destination_as":      strconv.Itoa(f.DestinationAS),
 				"destination_as_name": asns[f.DestinationAS],
 				"hostname":            f.Hostname,
+				"ip_family":           ipFamily,
 			},
 		).Add(float64(f.Bytes))
 	} else if f.DestinationAS == asn {
@@ -142,6 +149,7 @@ func logFlow(message sarama.ConsumerMessage, asns map[int]string, asn int) {
 				"destination_as":      strconv.Itoa(f.DestinationAS),
 				"destination_as_name": asns[f.DestinationAS],
 				"hostname":            f.Hostname,
+				"ip_family":           ipFamily,
 			},
 		).Add(float64(f.Bytes))
 	}
